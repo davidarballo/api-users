@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { ListUsersDto } from './dto/list-users.dto';
+import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class UsersService {
@@ -11,8 +13,15 @@ export class UsersService {
         private userModel: Model<UserDocument>,
     ) { }
 
-    create(data: Partial<User>) {
-        return this.userModel.create(data);
+    async create(data: any) {
+        try {
+            return await this.userModel.create(data);
+        } catch (error) {
+            if (error?.code === 11000) {
+                throw new ConflictException('El email ya está registrado');
+            }
+            throw error;
+        }
     }
     async findAll(query: ListUsersDto) {
         const page = query.page ?? 1;
@@ -46,15 +55,45 @@ export class UsersService {
             },
         };
     }
-    findById(id: string) {
-        return this.userModel.findById(id);
+    async findById(id: string) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new BadRequestException('ID inválido');
+        }
+
+        const user = await this.userModel.findById(id);
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        return user;
     }
 
-    update(id: string, data: any) {
-        return this.userModel.findByIdAndUpdate(id, data, { new: true });
+    async update(id: string, data: any) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new BadRequestException('ID inválido');
+        }
+
+        const user = await this.userModel.findByIdAndUpdate(id, data, { new: true });
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        return user;
     }
 
-    remove(id: string) {
-        return this.userModel.findByIdAndDelete(id);
+    async remove(id: string) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new BadRequestException('ID inválido');
+        }
+
+        const user = await this.userModel.findByIdAndDelete(id);
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        return { message: 'Usuario eliminado correctamente' };
     }
 }
