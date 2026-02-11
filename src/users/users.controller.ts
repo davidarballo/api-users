@@ -5,10 +5,13 @@ import { Param, Put, Delete } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Query } from '@nestjs/common';
 import { ListUsersDto } from './dto/list-users.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { UseGuards } from '@nestjs/common';
 
 @ApiTags('Usuarios')
-@Controller('users')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
     constructor(private usersService: UsersService) { }
