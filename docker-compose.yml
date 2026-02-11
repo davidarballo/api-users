@@ -1,4 +1,16 @@
 services:
+  api:
+    build: .
+    container_name: api-users
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URI: mongodb://mongo:27017/api_users
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+    depends_on:
+      - mongo
+
   mongo:
     image: mongo:7
     container_name: api-users-mongo
