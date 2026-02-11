@@ -5,7 +5,10 @@ import { Param, Put, Delete } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Query } from '@nestjs/common';
 import { ListUsersDto } from './dto/list-users.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Usuarios')
+@Controller('users')
 @Controller('users')
 export class UsersController {
     constructor(private usersService: UsersService) { }
