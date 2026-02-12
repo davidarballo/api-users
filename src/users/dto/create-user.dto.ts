@@ -1,12 +1,9 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsDefined, IsEmail, IsString, MinLength, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { CreateProfileDto } from './create-profile.dto';
 
 export class CreateUserDto {
-    @ApiProperty({ example: 'David' })
-    @IsString()
-    @IsNotEmpty()
-    name: string;
-
     @ApiProperty({ example: 'david@test.com' })
     @IsEmail()
     email: string;
@@ -15,4 +12,10 @@ export class CreateUserDto {
     @IsString()
     @MinLength(6)
     password: string;
+
+    @ApiProperty({ type: CreateProfileDto })
+    @IsDefined()
+    @ValidateNested()
+    @Type(() => CreateProfileDto)
+    profile: CreateProfileDto;
 }

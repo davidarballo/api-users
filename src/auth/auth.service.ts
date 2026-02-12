@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { Profile, ProfileDocument } from '../users/schemas/profile.schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -12,21 +13,28 @@ import { LoginDto } from './dto/login.dto';
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
     private jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterDto) {
     const hashed = await bcrypt.hash(dto.password, 10);
+    const createdProfile = await this.profileModel.create(dto.profile);
 
     try {
       const created = await this.userModel.create({
-        name: dto.name,
         email: dto.email,
         password: hashed,
+        profile: createdProfile._id,
       });
 
-      return { id: created._id, name: created.name, email: created.email };
+      return {
+        id: created._id,
+        email: created.email,
+        profile: createdProfile,
+      };
     } catch (error: any) {
+      await this.profileModel.findByIdAndDelete(createdProfile._id);
       if (error?.code === 11000) throw new ConflictException('El email ya está registrado');
       throw error;
     }

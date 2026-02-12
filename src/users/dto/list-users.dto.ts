@@ -21,7 +21,7 @@ export class ListUsersDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['name', 'email', 'createdAt', 'updatedAt'])
+  @IsIn(['email', 'createdAt', 'updatedAt'])
   sortBy?: string = 'createdAt';
 
   @IsOptional()

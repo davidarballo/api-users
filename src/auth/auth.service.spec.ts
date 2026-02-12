@@ -7,13 +7,17 @@ describe('AuthService', () => {
   const mockUserModel: any = {
     findOne: jest.fn(),
   };
+  const mockProfileModel: any = {
+    create: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+  };
 
   const mockJwtService = {
     signAsync: jest.fn().mockResolvedValue('token'),
   };
 
   beforeEach(() => {
-    service = new AuthService(mockUserModel, mockJwtService as any);
+    service = new AuthService(mockUserModel, mockProfileModel, mockJwtService as any);
   });
 
   it('login válido devuelve token', async () => {
