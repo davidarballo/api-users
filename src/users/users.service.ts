@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from './schemas/user.schema';
+import { Model, Types } from 'mongoose';
+import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersDto } from './dto/list-users.dto';
-import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
@@ -13,9 +14,16 @@ export class UsersService {
         private userModel: Model<UserDocument>,
     ) { }
 
-    async create(data: any) {
+    async create(data: CreateUserDto) {
+        const hashed = await bcrypt.hash(data.password, 10);
         try {
-            return await this.userModel.create(data);
+            const created = await this.userModel.create({
+                name: data.name,
+                email: data.email,
+                password: hashed,
+            });
+
+            return { id: created._id, name: created.name, email: created.email };
         } catch (error) {
             if (error?.code === 11000) {
                 throw new ConflictException('El email ya está registrado');
@@ -69,18 +77,28 @@ export class UsersService {
         return user;
     }
 
-    async update(id: string, data: any) {
+    async update(id: string, data: UpdateUserDto) {
         if (!Types.ObjectId.isValid(id)) {
             throw new BadRequestException('ID inválido');
         }
 
-        const user = await this.userModel.findByIdAndUpdate(id, data, { new: true });
+        try {
+            const user = await this.userModel.findByIdAndUpdate(id, data, {
+                new: true,
+                runValidators: true,
+            });
 
-        if (!user) {
-            throw new NotFoundException('Usuario no encontrado');
+            if (!user) {
+                throw new NotFoundException('Usuario no encontrado');
+            }
+
+            return user;
+        } catch (error) {
+            if (error?.code === 11000) {
+                throw new ConflictException('El email ya está registrado');
+            }
+            throw error;
         }
-
-        return user;
     }
 
     async remove(id: string) {

@@ -28,12 +28,22 @@ describe('UsersService', () => {
   });
 
   it('debería crear un usuario', async () => {
-    const user = { name: 'David', email: 'test@test.com' };
-    mockUserModel.create.mockResolvedValue(user);
+    const created = { _id: '1', name: 'David', email: 'test@test.com' };
+    mockUserModel.create.mockResolvedValue(created);
 
-    const result = await service.create(user);
+    const result = await service.create({
+      name: 'David',
+      email: 'test@test.com',
+      password: '123456',
+    });
 
-    expect(result).toEqual(user);
-    expect(mockUserModel.create).toHaveBeenCalled();
+    expect(result).toEqual({ id: '1', name: 'David', email: 'test@test.com' });
+    expect(mockUserModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'David',
+        email: 'test@test.com',
+        password: expect.any(String),
+      }),
+    );
   });
 });

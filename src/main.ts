@@ -10,6 +10,8 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true, // elimina campos extra
       forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
   
