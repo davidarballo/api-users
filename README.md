@@ -49,6 +49,7 @@ Flujo básico:
 - `POST /auth/login`
 - `GET /auth/me` (protegido)
 
+click en Authorize y pegar: Bearer <token>
 ### Users (protegidos con JWT)
 - `POST /users`
 - `GET /users`

@@ -19,6 +19,7 @@ async function bootstrap() {
     .setTitle('API Usuarios')
     .setDescription('API REST para gestión de usuarios')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
