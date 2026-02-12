@@ -1,98 +1,160 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# API Users (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST para gestión de usuarios con autenticación JWT, perfil asociado, validaciones y documentación Swagger.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
+- NestJS
+- MongoDB + Mongoose
+- JWT (`@nestjs/jwt`, `passport-jwt`)
+- Class Validator / Class Transformer
+- Swagger (`@nestjs/swagger`)
+- Jest (unit tests)
 
-## Description
+## Requisitos
+- Node.js 18+
+- npm 9+
+- MongoDB en ejecución
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Variables de entorno
+Crear archivo `.env` en la raíz:
 
-## Project setup
-
-```bash
-$ npm install
+```env
+MONGO_URI=mongodb://localhost:27017/api-users
+JWT_SECRET=super_secret_key
+JWT_EXPIRES_IN=1d
 ```
 
-## Compile and run the project
+## Instalación y ejecución
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
+npm run start:dev
 ```
 
-## Run tests
+La API corre por defecto en `http://localhost:3000`.
+
+## Documentación Swagger
+- URL: `http://localhost:3000/docs`
+
+## Autenticación
+Flujo básico:
+1. Registrar usuario con perfil en `POST /auth/register`
+2. Loguear en `POST /auth/login`
+3. Usar `accessToken` en `Authorization: Bearer <token>`
+
+## Endpoints principales
+
+### Auth
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me` (protegido)
+
+### Users (protegidos con JWT)
+- `POST /users`
+- `GET /users`
+- `GET /users/:id`
+- `PUT /users/:id`
+- `DELETE /users/:id`
+
+## Ejemplos de payload
+
+### Register
+`POST /auth/register`
+
+```json
+{
+  "email": "david@prueba.com",
+  "password": "Password123!",
+  "profile": {
+    "firstName": "David",
+    "lastName": "Arballo",
+    "phone": "+54 9 11 5555 5555",
+    "city": "Cordoba"
+  }
+}
+```
+
+### Login
+`POST /auth/login`
+
+```json
+{
+  "email": "david@prueba.com",
+  "password": "Password123!"
+}
+```
+
+### Crear usuario (admin/uso interno)
+`POST /users`
+
+```json
+{
+  "email": "user@prueba.com",
+  "password": "Password123!",
+  "profile": {
+    "firstName": "User",
+    "lastName": "Test"
+  }
+}
+```
+
+### Actualizar usuario
+`PUT /users/:id`
+
+```json
+{
+  "email": "nuevo@prueba.com",
+  "password": "Password456!",
+  "profile": {
+    "city": "Cordoba"
+  }
+}
+```
+
+## Búsqueda, paginación y orden
+Endpoint: `GET /users`
+
+Query params:
+- `search`: texto a buscar (actualmente sobre `email`)
+- `page`: página (min 1)
+- `limit`: cantidad por página (min 1, max 100)
+- `sortBy`: `email | createdAt | updatedAt`
+- `sortDir`: `asc | desc`
+
+Ejemplo:
+
+```http
+GET /users?search=david&page=1&limit=10&sortBy=createdAt&sortDir=desc
+```
+
+## Validaciones y errores
+- Se usa `ValidationPipe` global con:
+  - `whitelist: true`
+  - `forbidNonWhitelisted: true`
+  - `transform: true`
+- Errores comunes:
+  - `400 Bad Request`: payload inválido o ID inválido
+  - `401 Unauthorized`: credenciales/token inválidos
+  - `404 Not Found`: usuario no encontrado
+  - `409 Conflict`: email duplicado
+
+## Tests
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm test
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Build
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run build
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Docker (opcional)
+Proyecto incluye `Dockerfile` y `docker-compose.yml`.
 
-## Resources
+Uso típico:
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+docker compose up --build
+```
